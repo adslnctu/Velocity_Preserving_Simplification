@@ -1,15 +1,11 @@
 # coding=utf-8
-"""比較 nDCG, hit rate
-    This Process is comparing the result of simplifications:
-        STD-MAX (original), STD-SUM, Douglas-Peucker
-    Find top k candidates from query trajectory, and measure the difference
-    of candidates
-    
-    measurement: nDCG, hit rate
-    
-    V2:
-        一次測不同K的結果(利用sublist達成)
+"""
+    This Process tests the velocity error, storage and effectiveness of ATS, NP-ATS, and other simplification methods.
 
+    framwork
+        1. retrieve raw dataset from tid list file
+        2. simplify raw dataset by different simplifications
+        3. calculate the effectiveness of each simplified dataset by testing the top-k similar trajectory retrieval
 """
 import sys
 import time
@@ -21,7 +17,6 @@ import json
 from prettytable import from_csv
 import logging
 import psycopg2cffi
-
 
 logging.basicConfig(level=logging.INFO)
 
@@ -40,14 +35,17 @@ from effectiveness import AveragePrecision as AP, DCG
 
 conn_string = "host='127.0.0.1' dbname='NAME' user='NAME' password='PASSWD'"
 conn = psycopg2cffi.connect(conn_string)
+
 def mean_dataset(IN):
     """traversal the input, and calculate the mean of all lists in intpus
         
-        param
-            input: a tructure dataset
+        INPUT
+            IN: a tructure dataset which contains some list
+                e.g. {a: 0, b: 1, c: [1,2,3]}
             
-        output
-            the structure dataset which its list be converts to the mean value
+        OUTPUT
+            the structure dataset whose list been converted to the mean value
+                e.g. {a: 0, b: 1, c: 2}
     """
     # print type(IN)
     if type(IN) == list:
@@ -59,14 +57,28 @@ def mean_dataset(IN):
     return IN
 
 def find_top_k(query, dataset, k, task, epsilon):
+    """
+        find the top-k similar trajectories from query trajectory and similar measurement
+        
+        INPUT
+            query: query trajectory
+            dataset: the queried dataset to find the top k trajectories
+            k: the number of retrieved similar trajectories
+            task: similar measurement, include dtw, lcss and edr
+            epsilon: the matching threshold of EDR and LCSS, useless for DTW
+            
+        OUTPUT
+            top k retrieved tids and its distance from query trajectory
+            e.g. [(tid_1, dist_1), (tid_2, dist_2), ...(tid_k, dist_k)]
+    """
+    
     top_k = []
     
     min_dist = float("inf")
     max_dist = -1 * float("inf")
     
+    
     if task == 'dtw':
-        
-
         for tid,Tb in dataset:
 
             dist= dtw(query, Tb)
@@ -74,7 +86,6 @@ def find_top_k(query, dataset, k, task, epsilon):
             if dist < min_dist:
                 top_k.append((int(tid), dist))
                 top_k.sort(key = lambda x : x[1])
-                
                 top_k = top_k[0:k]
 
                 if len( top_k)<k:
@@ -83,7 +94,6 @@ def find_top_k(query, dataset, k, task, epsilon):
                     min_dist = top_k[-1][1]
     elif task == 'edr':
         for tid,Tb in dataset:
-
             dist= edr(query, Tb, epsilon)
 
             if dist < min_dist:
@@ -113,39 +123,40 @@ def find_top_k(query, dataset, k, task, epsilon):
     return top_k
 
 def find_result(query, dataset, result, groundtruth, maxK,  task, epsilon):
-    """
-        query: query trajectory id
-        dataset: simplified dataset
-        result: output data
-        groundtruth: groundtruth by raw dataset
-        k: max K
-        task: task algorithm(dtw, edr, lcss)
-        epsilon: maximun length threshold of EDR and LCSS
+    """return the effectiveness measurement from given query and groundtruth
+        INPUT
+            query: query trajectory
+            dataset: simplified dataset
+            result: output data
+            groundtruth: the top-k similar trajectories from raw dataset
+            maxK: max number of k
+            task: task algorithm(dtw, edr, lcss)
+            epsilon: maximun length threshold of EDR and LCSS
+        
+        OUTPUT
+            the measurement of given retrieved result and groundtruth, includes hit-rate, MAP and nDCG
     """
 
     tStart = time.time()
-    top_k = find_top_k(query, dataset, maxK, task, epsilon)  #find top-k tra in STD dataset
+    top_k = find_top_k(query, dataset, maxK, task, epsilon)  #find top-k similar trajectories in dataset
     tEnd = time.time()
     
-    approx_result = [tid for (tid,dist) in top_k]  #get top-k tid in tra
+    approx_result = [tid for (tid,dist) in top_k]  #get top-k tids
+    
     
     if len(groundtruth) == 0:
-        groundtruth = approx_result
+        groundtruth = approx_result     # use approx_result as groundtruth if groundtruth is empty
     
     
-    k_list = [k for k in range(5,maxK+1,5)]
+    k_list = [k for k in range(5,maxK+1,5)]     # built a list of ascending k by step 5
    
-    
     result['task_time'].append(tEnd - tStart)
-    for k in k_list:
+    
+    for k in k_list:    # calculate the effectiveness from different k
         
         k_groundtruth = groundtruth[:k]
         k_approx_result = approx_result[:k]
-        
-        # print k_groundtruth, k_approx_result
-        
-        # groundtruth = [key for key, value in score_list.iteritems()]
-        
+       
         nDCG = calculate_nDCG(k_approx_result, k_groundtruth)
         hit_rate = len( set(k_groundtruth)&set(k_approx_result) )/ float(k)
         MAP = AP(k_groundtruth, k_approx_result)
@@ -154,19 +165,19 @@ def find_result(query, dataset, result, groundtruth, maxK,  task, epsilon):
         
         result['hit_rate'][k].append(hit_rate)
         result['MAP'][k].append(MAP)
+        
     return groundtruth
-
-def calcu_nDCG(IDCG, approx_result, score_list):
-    approx_DCG = []
-    for tid in approx_result:
-        if tid in score_list:
-            approx_DCG.append(score_list[tid])
-        else:
-            approx_DCG.append(0)
-    dcg = DCG(approx_DCG)
-    return float(dcg)/IDCG
     
 def calculate_nDCG(groundtruth, approx_result):
+    """return the nDCG score from groundtrugh and approx_result
+        
+        INTPUT
+            groundtruth: the top-k similar trajectories from raw dataset
+            approx_result: the top-k similar trajectories from simplified dataset
+        
+        OUTPUT
+            the nDCG score
+    """
     approx_DCG = []
     score_list = {}
     
@@ -188,12 +199,18 @@ def calculate_nDCG(groundtruth, approx_result):
 def simplification_epsilon(dataset, epsilon, algo, dataset_name):
     """Simplification by epsilon
         
-        A general simplification framwork, parameter 'epsilon' may be a error/size/gini/other threshold you want
+        A general simplification framwork, parameter 'epsilon' may be a error/gini/other threshold you want
         algo is the simplification algorithm algo(raw trajectory, epsilon)
         
-        param
-            dataset: The overall dataset
-            epsilon: Maximun error tolerance for Douglas-Peucker algorithm
+        INPUT
+            dataset: The raw dataset
+            epsilon: the maximun error tolerance for Douglas-Peucker, Iri-Imai and DPTS, and the gini index threshold for ATS
+            algo: the function of simplification method
+            dataset_name: the name of dataset. e.g. raw, ATS, NP-ATS...
+            
+        OUTPUT
+            simplified dataset by given simplification method
+            
     """
     dataset[dataset_name] = []
     error_list = []
@@ -231,9 +248,8 @@ def simplification_epsilon(dataset, epsilon, algo, dataset_name):
     }
     
 
-
 def build_groundtruth(Ta, dataset, shift_size, k):
-    """
+    """build groundtruth for ideal environment. (useless now)
         Generate 10 trajectories from query as backround
         shift 10% of points as noise
         range: -10 ~ 10 m (-0.0001 ~ 0.0001)
@@ -266,6 +282,16 @@ def build_groundtruth(Ta, dataset, shift_size, k):
     random.shuffle(dataset)
 
 def find_idx_from_tid(dataset, tid):
+    """
+        return the position of trajectory from dataset by given tid
+        
+        INTPUT
+            dataset: trajectory dataset
+            tid: trajectory id
+        
+        OUTPUT
+            a index of dataset and tid of dataset[index] = tid
+    """
     for (idx, (tid2, tra)) in enumerate(dataset):
         if tid == tid2:
             return idx
@@ -275,9 +301,12 @@ def output_file(OutPath, result, ArguList):
     """ Write file from given argument list of result
     
         INPUT
-            OutPath: the output file path
+            OutPath: the path of output file 
             result: result data
             ArguList: what you want write
+        
+        OUTPUT
+            write result to output file
     """
     AlgoList = result.keys()
     FoutDatasetResult = open(OutPath, 'w')
@@ -299,6 +328,7 @@ def result_output_file(result, file_name, task, measurement_list, k_list):
             OutPath: the output file path
             result: result data
             Measurements: what you want write
+            
         output file path: result/[file_name]_[task]_[measurement].csv
     """
     AlgoList = result.keys() # simplification algorithm list
@@ -329,8 +359,6 @@ def result_output_file(result, file_name, task, measurement_list, k_list):
     
 
 if __name__ == '__main__':
-    
-
 
     """
         Prepare arguments
@@ -393,11 +421,10 @@ if __name__ == '__main__':
         dataset['raw'] = get_file('tid_list/'+file_name)
         
         logging.info("start simplification")
-        
-        
-        # 降低 storage -> 提升 error lerance
-        # 提升 storage -> 降低 error lerance
-        
+
+        """
+            build simplified datasets from different methods
+        """
         
         
         result['NP-ATS'] = simplification_epsilon(dataset, 0.4, NP_ATS, "NP-ATS")
@@ -419,9 +446,8 @@ if __name__ == '__main__':
         # result['DPTS'] = simplification_epsilon(dataset, 1.1, DPTS_approx, "DPTS")
         
         
-        
         fout = open(path,'w')
-        fout.write(json.dumps(dataset, separators=(',',':')))
+        fout.write(json.dumps(dataset, separators=(',',':')))   # write dataset to file
         
         OutPath = 'result/'+ file_name[0:-4] + '_dataset_result' + '.csv'
         
@@ -439,8 +465,7 @@ if __name__ == '__main__':
     
     """
     Algo_list = ['raw', 'ATS', 'NP-ATS', 'II', 'DP', 'DPTS']
-    # Algo_list = ['raw', 'ATS', 'NP-ATS', 'Iri-Imai', 'Douglas-Peucker', 'DPTS']
-    # Algo_list = ['raw', 'ATS', 'NP-ATS', 'Douglas-Peucker']
+
     measurement_list = ['task_time', 'nDCG', 'hit_rate', 'MAP']
     
     k_list = [k for k in range(5,k+1,5)]
@@ -457,7 +482,7 @@ if __name__ == '__main__':
             result[Algo]['MAP'][k] = []
     
     
-    for i in range(loop):
+    for i in range(loop):   # test LOOP times to get average result
         """
             Build query and groundtruth
         """

@@ -4,6 +4,16 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 def get_from_id(tid):
+    """retrieve the trajectory from database by given trajectory id
+    
+        INPUT
+            tid: trajectory id
+        
+        OUTPUT
+            a trajectory matching given tid
+            e.g. [{x:1, y:2, tid: 1, index: 0}, {x:1.5, y:2.3, tid: 1, index: 1}, ...]
+        
+    """
     conn_string = "host='127.0.0.1' dbname='NAME' user='NAME' password='PASSED'"
     conn = psycopg2cffi.connect(conn_string)
     cur = conn.cursor()
@@ -28,14 +38,23 @@ def get_from_id(tid):
     return trajectory
 
 def get_by_number(number=1):
-    #conn_string = "host='192.168.100.200' dbname='vegetable' user='vegetable' password='Xup6%4M3'"
+    """retreive a list of trajectories from given number
+        INPUT
+            number: the number of retreived trajectories
+        OUTPUT
+            a list of trajectories
+            e.g.
+            [
+                [{x:1, y:2, tid: 1, index: 0}, {x:1.5, y:2.3, tid: 1, index: 1}, ...]
+                [{x:1, y:2, tid: 2, index: 0}, {x:1.5, y:2.3, tid: 2, index: 1}, ...]
+                ...
+            ]
+    """
     conn_string = "host='127.0.0.1' dbname='adsl' user='adsl' password='radsl'"
     conn = psycopg2cffi.connect(conn_string)
     cur = conn.cursor()
-    #query = "select tid from taxi.trajectory ORDER BY RANDOM() limit " + str(number) + ";"
     query = "select tid from trajectory.taxi group by tid limit "  + str(number) +  ";";
     
-    #query = "select * from (select tid from trajectory.taxi group by tid) as T order by random()  limit 1;"
     
     logging.debug('query: '+query)
     
@@ -58,7 +77,23 @@ def get_by_number(number=1):
     return trajectory_dataset
 
 def get_file(file_name):
-
+    """retrieve a list of trajectories from a tid list file
+    
+        INPUT
+            file_name: the name of tid list file
+                       format:
+                            tid1
+                            tid2
+                            ...
+        OUTPUT
+            a list of trajectories
+            e.g.
+            [
+                [{x:1, y:2, tid: 1, index: 0}, {x:1.5, y:2.3, tid: 1, index: 1}, ...]
+                [{x:1, y:2, tid: 2, index: 0}, {x:1.5, y:2.3, tid: 2, index: 1}, ...]
+                ...
+            ]
+    """
     f = open(file_name)
 
     tids = f.readlines()
@@ -67,48 +102,3 @@ def get_file(file_name):
 
     f.close()
     return dataset
-    
-    
-def print_WKT(trajectory, S = []):
-    tid = trajectory[0]['tid']
-    
-    if len(S) != 0:
-        trajectory = [trajectory[i] for i in S]
-    
-    points = []
-    
-    for point in trajectory:
-        points.append(str(point['x']) + " " + str(point['y']))
-    
-    print "LINESTRING (", ', '.join(points),")"
-    
-def WKT(trajectory, S = []):
-    tid = trajectory[0]['tid']
-    
-    if len(S) != 0:
-        trajectory = [trajectory[i] for i in S]
-    
-    points = []
-    
-    for point in trajectory:
-        points.append(str(point['x']) + " " + str(point['y']))
-    
-    return "LINESTRING (" + ', '.join(points) + ")"
-    
-    
-if __name__ == '__main__':
-    tid = 1382270570620000011
-    
-    #print get_from_id(tid)
-    print "get 2 trajectories"
-    print get_by_number(1)
-    
-    print "tid:", tid
-    tra = get_from_id(tid)
-    S = [0,10,20]
-    print "original"
-    print_WKT(tra)
-    print "Simpilfied"
-    print_WKT(tra, S)
-    
-    

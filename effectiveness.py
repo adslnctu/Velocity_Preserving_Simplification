@@ -1,6 +1,17 @@
 import math
 import random
+
 def DCG(score_list):
+    """return the DCG score from a score list
+    
+        given a score list, e.g. [5,4,3,2,1], calculate the DCG by adding the score with decending weight.
+        e.g. DCG([5,4,3,2,1]) = 5 + 4 / log2 + 3 / log3 + 2 / log4 + 1 / log5
+        
+        INPUT
+            score_list: a list of scores. e.g. [5,4,3,2,1]
+        OUTPUT
+            the DCG score
+    """
     dcg = 0
     for idx, score in enumerate(score_list,1):
         if idx ==1:
@@ -12,26 +23,24 @@ def DCG(score_list):
 def AveragePrecision(relevant, retrieved):
     """Average Precision
     
+        Given a groundtruth and a retrieval result, calculate the average precision by different k.
+    
         INPUT
-            relevant: groundtruth
-            retrieved: created result
+            relevant: groundtruth. e.g. [a,b,c,d,e]
+            retrieved: created result. e.g. [a,d,e,b,f]
         OUTPUT
             A avg precision (0~1)
     """
     
     relevant = set(relevant)
-    
     hit = 0
-    
     precision_list = []
     
     
     for i, result in enumerate(retrieved):
         if result in relevant:
             hit += 1
-            
             precision = float(hit) / (i+1)
-            # print precision
             precision_list.append(precision)
     
     if len(precision_list) == 0:

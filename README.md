@@ -5,6 +5,7 @@ It includes Adaptive Trajectory Simplification (ATS) and Non-Partition Adaptive 
 
 # required environment
 PyPy 5.1.1 as python runtime environment.
+
 PostgreSQL 9.5.2
 
 
@@ -40,7 +41,8 @@ and 2 indexes:
 
 ## Adaptive Trajectory Simplification
 
-**location:** simplication.ATS
+**location:** simplication/ATS.py
+
 **function:** ATS(trajectory, min_gini)
 
 	Given a raw traejctory and a threshold of gini index, retuen a simplified trajectory.
@@ -63,7 +65,8 @@ and 2 indexes:
 
 ## Non-Partition Adaptive Trajectory Simplification
 
-**location:** simplication.ATS
+**location:** simplication/ATS.py
+
 **function:** NP_ATS(trajectory, min_gini)
 	
     A streaming version of ATS

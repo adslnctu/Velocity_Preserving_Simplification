@@ -39,6 +39,42 @@ and 2 indexes:
 
 # function
 
+## Threshold Decision Model
+
+**location:** runThresholdDecisionModel.py
+
+
+	Given a trajectory tid file and parameters, output a list of error tolerances and velocity ranges.
+    1. partition trajectory by gini index to different sub-trajectory with consistent velocity
+    2. use adaptive score to find the suitable epsilon of each sub-trajectory
+    3. calculate the average value of epsilons in each velocity range
+
+**args:**
+
+| name | type | comment
+|--------|--------| ----|
+| -f, --file | string | input file name in **tid_list/** |
+| -g, --gini | float | partition threshold (0.1, 0.9) |
+| -a, --alpha | float | weight of error and compression (0.1,0.9)|
+
+
+```bash
+$ pypy runThresholdDecisionModel.py -f example.txt -g 0.5 -a 0.5
+Namespace(alpha=0.5, file='example.txt', gini=0.5)
+INFO:root:retrieve dataset
+use saved file: dataset/raw/example.txt
+INFO:root:partition
+INFO:root:threshold calculation
+INFO:root:distribution analysis
+groupID epsilon
+0 17.5818491354 m
+1 32.1597972196 m
+2 66.5642479441 m
+3 101.584648286 m
+[0.0001583950372554716, 0.0002897279028794159, 0.0005996779094060433, 0.0009151770115898896]  // epsilon list
+
+```
+
 ## Adaptive Trajectory Simplification
 
 **location:** simplication/ATS.py

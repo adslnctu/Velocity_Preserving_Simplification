@@ -3,6 +3,8 @@ import psycopg2cffi
 import argparse
 import heapq
 import math
+import os
+import json
 
 from get_trajectory import get_from_id, get_file
 from simplification.Simplify_velocity import eud, get_velocity, gini_index, label, get_label_list, split, get_split_pair
@@ -35,7 +37,7 @@ def TrajectoryPartition(trajectory, min_gini):
     
     return sub_trajectory_list
 
-def ThresholdCalculation(trajectory):
+def ThresholdCalculation(trajectory, alpha):
     """Adaptive simplification
     
         Use a parameter alpha to calculate the best simplification result by adaptive score.
@@ -78,7 +80,7 @@ def ThresholdCalculation(trajectory):
     
     ''' Calculate sum of error from start to end '''
     SUM_ERROR = max_error = sum_CED(trajectory, result)
-    if SUM_ERROR == 0: return [i for i in xrange(len(trajectory))] 
+    if SUM_ERROR == 0: return (-1, 0)
     
     heapq.heapify(error_list)
     heapq.heappush(error_list, error_calculate(start,end,trajectory))
@@ -111,7 +113,7 @@ def ThresholdCalculation(trajectory):
         error = SUM_ERROR               # use sum error as error
         
         index_list.append(index)
-        score = (error/max_error) + (float(len(index_list)-2)/float(len(trajectory)-2))
+        score = alpha * (error/max_error) + (1-alpha) * (float(len(index_list)-2)/float(len(trajectory)-2))
         score_list.append(score)
         
         
@@ -158,16 +160,25 @@ def eud(x,y):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(prog='PROG', description='Compare nDCG and hit rate of STD and DP algotithm')
-    parser.add_argument('-f', '--file', default='example.txt', help = 'dataset name (default: short)')
+    parser.add_argument('-f', '--file', default='example.txt', help = 'dataset name (default: example.txt)')
     parser.add_argument('-g', '--gini', type = float, default=0.5, help = 'gini index (default: 0.5)')
+    parser.add_argument('-a', '--alpha', type = float, default=0.5, help = 'alpha (default: 0.5)')
     
     args = parser.parse_args()
     file_name = args.file
     min_gini  = args.gini
+    alpha = args.alpha
     print args
     
     logging.info("retrieve dataset")
-    dataset = get_file('tid_list/'+file_name)
+    
+    raw_path = 'dataset/raw/'+file_name[0:-4] + '.txt'
+    if os.path.isfile(raw_path):
+        print "use saved file: " + raw_path
+        raw_fin = open(raw_path,'r')
+        dataset = json.loads(raw_fin.readline())
+    else:
+        dataset = get_file('tid_list/'+file_name)
     
     logging.info("partition")
     sub_trajectory_list = []
@@ -177,13 +188,17 @@ if __name__ == '__main__':
     logging.info("threshold calculation")
     suitable_epsilon = [[],[],[],[]]        # 4 groups
     for sub_trajectory in sub_trajectory_list:
-        Label, SuitableEpsilon = ThresholdCalculation(sub_trajectory)
+        Label, SuitableEpsilon = ThresholdCalculation(sub_trajectory, alpha)
         if Label != -1:
             suitable_epsilon[Label].append(SuitableEpsilon)
         # print Label, SuitableEpsilon
         
     logging.info("distribution analysis")
     print "groupID epsilon"
-    for gid, group in enumerate(suitable_epsilon):
-        print gid, sum(group)/len(group)
     
+    epsilon_list = []
+    for gid, group in enumerate(suitable_epsilon):
+        avg_epsilon = sum(group)/len(group)
+        print gid, avg_epsilon*111000, "m"
+        epsilon_list.append(avg_epsilon)
+    print epsilon_list

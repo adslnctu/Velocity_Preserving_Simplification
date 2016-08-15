@@ -11,7 +11,7 @@ from simplification.Simplify_velocity import eud, get_velocity, gini_index, labe
 from simplification.error import CED, sum_CED, error_calculate
 
 
-conn_string = "host='127.0.0.1' dbname='adsl' user='adsl' password='radsl'"
+conn_string = "host='127.0.0.1' dbname='XXX' user='XXX' password='XXX'"
 conn = psycopg2cffi.connect(conn_string)
 
 

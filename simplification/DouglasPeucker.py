@@ -39,7 +39,7 @@ def DP(trajectory, epsilon):
     Returns:
         A list of Simplified trajectory index.
         Example:
-            [0, 1, 5, 9, 10]        
+            [0, 1, 5, 9, 10]
     """
     keep_list = []
     DouglasPeuckerRecursive(trajectory, 0, len( trajectory)-1, epsilon, keep_list)

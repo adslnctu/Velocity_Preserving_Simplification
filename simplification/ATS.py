@@ -6,21 +6,32 @@ from Simplify_velocity import get_velocity, label, get_split_pair
 from error import Position_error, CED
 
 def ATS(trajectory, min_gini):
-    """
-        Adaptive Trajectory Simplification
-        
+    """Adaptive Trajectory Simplification
+    
+        Given a raw traejctory and a threshold of gini index, retuen a simplified trajectory.
+        1. partition trajectory by gini index to different sub-trajectory with consistent velocity
+        2. simplify each sub-trajectory adaptively by suitable position-error tolerance of threshold mapping table
+        3. merge all simplified sib-trajectories to a complete simplified trajectory
+            
         INPUT
-            trajectory
+            trajectory: raw trajectory
+                e.g.
+                [
+                    {'tid': 0, 'index': 0, 'x': 10, 'y': 10.5},
+                    {'tid': 0, 'index': 1, 'x': 11, 'y': 10.3},
+                    {'tid': 0, 'index': 2, 'x': 15, 'y': 12.5}...
+                ]
             min_gini: partition threshold
         OUTPUT
             simplified trajectory idx list
+                e.g. [0, 1, 5, 9, 10]
     """
     if len(trajectory) == 0:
         return -1
     
     
     """
-    Build partitions by avg velocity
+        partitions by avg velocity
     """
     
     partitionTime = 0
@@ -30,7 +41,7 @@ def ATS(trajectory, min_gini):
     
     tStart = time.time()
     
-    pair_list = get_split_pair(trajectory, min_gini)
+    pair_list = get_split_pair(trajectory, min_gini)    # partition
     
     partitionTime = time.time() - tStart
     
@@ -39,16 +50,15 @@ def ATS(trajectory, min_gini):
     
     epsilon = 0
     
-    # epsilon_dict = [0.004592016 / 111, 0.01176842 / 111, 0.02649389 / 111, 0.05039507 / 111] #g=0.4
-    epsilon_dict = [0.003461152 / 111, 0.02017883 / 111, 0.03125521 / 111, 0.08043219 / 111] #g=0.1, MAX Final Version
-    # epsilon_dict = [0.00502254864192/111, 0.0255854290033/111, 0.040629531118/111, 0.112363957637/111]  # g=0.3 max
-    # epsilon_dict = [0.0129068727529/111,0.0336671793759/111,0.0587065427654/111,0.16344623299/111]  # g=0.5 max
-    # epsilon_dict = [0.0395070706597/111,0.0868617737273/111,0.220840329515/111,0.224195931453/111]  # g=0.7 max
-    # epsilon_dict = [0.0494846202161/111, 0.0942020880901/111, 0.252738388544/111, 0.347107672303/111]  # g=0.9 max
+
+    threshold_mapping_table = [0.00011280332154717442, 0.0003203378645644717, 0.000488333173882603, 0.0015425776856441526] #g=0.5, alpha = 0.5
+
     
     
     
-    
+    """
+        simplification
+    """
     for idx in xrange(len(pair_list)):
     
         tStartSimplification = time.time()
@@ -60,13 +70,11 @@ def ATS(trajectory, min_gini):
         
         velocity_list = get_velocity(sub_trajectory)
         avg_velocity = sum(velocity_list) / float(len(velocity_list))
-        L = label(avg_velocity)
+        L = label(avg_velocity)     # get average velocity group id
         
-        epsilon = epsilon_dict[L]
-            
- 
-        # S = DP(sub_trajectory, epsilon)        
-        S = EBT(sub_trajectory, epsilon)        
+        epsilon = threshold_mapping_table[L]  # get epsilon from threshold mapping table
+
+        S = EBT(sub_trajectory, epsilon)    # simplify each sub-trajectory    
 
         S = [i+start for i in S]
         
@@ -74,7 +82,7 @@ def ATS(trajectory, min_gini):
         
         tStartMerge = time.time()
         
-        map(lambda i: simplified_set.add(i), S)
+        map(lambda i: simplified_set.add(i), S) # combine sub-trajectories
         
         mergeTime += time.time() - tStartMerge
 
@@ -82,7 +90,7 @@ def ATS(trajectory, min_gini):
     tStartMerge = time.time()
     
     simplified_list = list(simplified_set)
-    simplified_list.sort()
+    simplified_list.sort()  # sort simplified trajectory
     
     mergeTime += time.time() - tStartMerge
     
@@ -92,44 +100,55 @@ def ATS(trajectory, min_gini):
     return simplified_list
    
 def NP_ATS(trajectory, min_gini):
-    """
-        Non-Partition Adaptive Trajectory Simplification
+    """Non-Partition Adaptive Trajectory Simplification
         
+        A streaming version of ATS
+        Given a raw traejctory and a threshold of gini index, retuen a simplified trajectory.
+        1. add each incomming point p to buffer
+        2. calculate the error of buffer and whether velocity changes
+        3. keep p if error > error tolerance from threshold mapping table or velocity changes
+        4. stop while adding the last point of trajectory to buffer
+            
         INPUT
-            trajectory
-            min_gini: partition threshold (not used)
+            trajectory: raw trajectory
+                e.g.
+                [
+                    {'tid': 0, 'index': 0, 'x': 10, 'y': 10.5},
+                    {'tid': 0, 'index': 1, 'x': 11, 'y': 10.3},
+                    {'tid': 0, 'index': 2, 'x': 15, 'y': 12.5}...
+                ]
+            min_gini: partition threshold (useless)
         OUTPUT
             simplified trajectory idx list
+                e.g. [0, 1, 5, 9, 10]
     """
     
     if len(trajectory) == 0:
         return -1
-    
-    
-    """
-    Build partitions by avg velocity
-    """
 
 
-    # epsilon_dict = [0.004592016 / 111, 0.01176842 / 111, 0.02649389 / 111, 0.05039507 / 111] #g=0.4
-    epsilon_dict = [0.003461152 / 111, 0.02017883 / 111, 0.03125521 / 111, 0.08043219 / 111] #g=0.1, MAX Final Version
-    # epsilon_dict = [0.00502254864192/111, 0.0255854290033/111, 0.040629531118/111, 0.112363957637/111]  # g=0.3 max
-    # epsilon_dict = [0.0129068727529/111,0.0336671793759/111,0.0587065427654/111,0.16344623299/111]  # g=0.5 max
-    # epsilon_dict = [0.0395070706597/111,0.0868617737273/111,0.220840329515/111,0.224195931453/111]  # g=0.7 max
-    # epsilon_dict = [0.0494846202161/111, 0.0942020880901/111, 0.252738388544/111, 0.347107672303/111]  # g=0.9 max
+    threshold_mapping_table = [0.00011280332154717442, 0.0003203378645644717, 0.000488333173882603, 0.0015425776856441526] #g=0.5, alpha = 0.5
+
     
-    velocity_list = get_velocity(trajectory)
+    velocity_list = get_velocity(trajectory)    # get velocity list
     
-    epsilon_list = [epsilon_dict[label(v)] for v in velocity_list]
+    epsilon_list = [threshold_mapping_table[label(v)] for v in velocity_list]  # get suitable epsilons for each segment from threshold_mapping_table
     
-    # print [label(v) for v in velocity_list]
-    # print epsilon_list
-    
-    S = EBT_Adaptive(trajectory, epsilon_list)
+   
+    S = EBT_Adaptive(trajectory, epsilon_list)  # simplify trajectory adaptively
 
     return S
     
 def EBT(trajectory, epsilon):
+    """return a simplified trajectory whoes error < epsilon
+        
+        INPUT
+            trajectory: raw data
+            epsilon: the maximun position error tolerance
+        
+        OUTPUT
+            a simplified trajectory ids [0,1,4,7]
+    """
     buffer = []
     simplified = []
     
@@ -138,21 +157,14 @@ def EBT(trajectory, epsilon):
     simplified.append(0)
     
     for idx, point in enumerate(trajectory):
-        #start point = buffer[0]
-        #end point = point
         
-        buffer.append(point)
-    
-        # print point
+        buffer.append(point)  # add incoming point to buffer
     
         if len(buffer) > 1:
-            deviation = Position_error(0, len(buffer)-1, buffer)
-            # print idx, deviation
+            deviation = Position_error(0, len(buffer)-1, buffer)  # calculate error of buffer
+
             
-            # print deviation
-            
-            if deviation > epsilon:
-                # print idx-1
+            if deviation > epsilon:  # keep point if error > given epsilon
                 simplified.append(idx-1)
                 buffer = buffer[-2:]
     
@@ -160,35 +172,38 @@ def EBT(trajectory, epsilon):
     return simplified
     
 def EBT_Adaptive(trajectory, epsilon_list):
+    """return a simplified trajectory whoes error < epsilon_list and velocity changes
+        
+        INPUT
+            trajectory: raw data
+            epsilon_list: the maximun position error tolerance list for each segments
+        
+        OUTPUT
+            a simplified trajectory ids [0,1,4,7]
     """
-        Add velocity changed window
-        to avoid velocity changed temporarily and restored
-        e.g. 11111211111
-    """
+    
     buffer = []
     simplified = []
     
     WindowLength = 2
     
-    # vThreshold = int(len(trajectory) * 0.09)
-    
     eud = lambda x,y: math.sqrt( pow(x['x'] - y['x'], 2) + pow(x['y'] - y['y'], 2))
     
-    simplified.append(0)
+    simplified.append(0)  # keep the first point
     
     for idx, point in enumerate(trajectory):
 
-        buffer.append(point)
+        buffer.append(point)    # add incomming point to buffer
+        
         if len(buffer) > 1:
-            deviation = Position_error(0, len(buffer)-1, buffer)
+            deviation = Position_error(0, len(buffer)-1, buffer)    # calculate error of buffer
 
-            if deviation > epsilon_list[idx-1]:
+            if deviation > epsilon_list[idx-1]:     # keep point if error > epsilon
                 simplified.append(idx-1)
                 buffer = buffer[-2:]
-            # elif epsilon_list[idx-1] != epsilon_list[idx-2]:  # No keep
-            elif epsilon_list[idx-1] != epsilon_list[idx-2] and epsilon_list[idx-1] == epsilon_list[min(idx, len(trajectory)-2)]:
+            elif epsilon_list[idx-1] != epsilon_list[idx-2] and epsilon_list[idx-1] == epsilon_list[min(idx, len(trajectory)-2)]:   # keep point if velocity changes
                 simplified.append(idx-1)
                 buffer = buffer[-2:]
             
-    simplified.append(len(trajectory)-1)
+    simplified.append(len(trajectory)-1)    # add the last point
     return simplified

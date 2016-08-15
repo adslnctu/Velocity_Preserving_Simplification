@@ -50,7 +50,7 @@ def get_by_number(number=1):
                 ...
             ]
     """
-    conn_string = "host='127.0.0.1' dbname='adsl' user='adsl' password='radsl'"
+    conn_string = "host='127.0.0.1' dbname='NAME' user='NAME' password='PASSED'"
     conn = psycopg2cffi.connect(conn_string)
     cur = conn.cursor()
     query = "select tid from trajectory.taxi group by tid limit "  + str(number) +  ";";

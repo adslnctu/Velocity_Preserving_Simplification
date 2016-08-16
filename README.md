@@ -4,7 +4,7 @@ This is a velocity preserving simplification by NCTU ADSL lab.
 It includes Adaptive Trajectory Simplification (ATS) and Non-Partition Adaptive Trajectory Simplification (NP-ATS), wihch is s streaming version of ATS
 
 # required environment
-PyPy 5.1.1 as python runtime environment.
+[PyPy 5.1.1](http://pypy.org/) as python runtime environment.
 
 PostgreSQL 9.5.2
 

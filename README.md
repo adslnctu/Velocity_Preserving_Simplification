@@ -3,14 +3,14 @@
 This is a velocity preserving simplification by NCTU ADSL lab.
 It includes Adaptive Trajectory Simplification (ATS) and Non-Partition Adaptive Trajectory Simplification (NP-ATS), wihch is s streaming version of ATS
 
-# required environment
+# Required Environment
 [PyPy 5.1.1](http://pypy.org/) as python runtime environment.
 
 PostgreSQL 9.5.2
 
 * to link pgSQL correctly, you need modify dbname, user and passwd in **get_trajectory.py**, **runThresholdDecisionModel.py** and **runExperiments.py** to correct value
 
-## dataset
+### Dataset
 we use a table trajectory.taxi in pgSQL
 
 |  Column   |            Type             | Comment                              |
@@ -29,7 +29,7 @@ and 2 indexes:
 
 
 
-## python model
+### Python Model
 
 | Model Name   | Comment                |
 |--------------|------------------------|
@@ -39,12 +39,12 @@ and 2 indexes:
 
 
 
-# main function
+# Main Function
 
 Our framework is as follows, which includes Threshold Decision Model and Adaptive Trajectory Simplification.
 ![framework](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/framework.png)
 
-## Threshold Decision Model
+### Threshold Decision Model
 
 **location:**  [runThresholdDecisionModel.py](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/runThresholdDecisionModel.py "runThresholdDecisionModel.py")
 
@@ -63,7 +63,7 @@ Our framework is as follows, which includes Threshold Decision Model and Adaptiv
 | -a, --alpha | float | weight of error and compression (0.1,0.9)|
 | -h, --help | | help information|
 
-**example:**
+**Example:**
 
 ```bash
 $ pypy runThresholdDecisionModel.py -f example.txt -g 0.5 -a 0.5
@@ -82,7 +82,7 @@ groupID epsilon
 
 ```
 
-## Adaptive Trajectory Simplification
+### Adaptive Trajectory Simplification
 
 **location:** [simplication/ATS.py](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/simplification/ATS.py "simplication/ATS.py")
 
@@ -106,7 +106,7 @@ groupID epsilon
         simplified trajectory idx list
         	e.g. [0, 1, 5, 9, 10]
 
-## Non-Partition Adaptive Trajectory Simplification
+### Non-Partition Adaptive Trajectory Simplification
 
 **location:** simplication/ATS.py
 
@@ -132,7 +132,7 @@ groupID epsilon
         simplified trajectory idx list
         	e.g. [0, 1, 5, 9, 10]
 
-## experiments
+### Experiments
 
 ![experiment framework](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/exp_framework.png)
 

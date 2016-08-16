@@ -134,6 +134,8 @@ groupID epsilon
 
 ## experiments
 
+![experiment framework](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/exp_framework.png)
+
 test the comression rate, velocity error, and effectiveness for DTW, EDR, LCSS
 1. read raw dataset from Database
 2. simplification by different method

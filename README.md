@@ -108,7 +108,7 @@ groupID epsilon
 
 ### Non-Partition Adaptive Trajectory Simplification
 
-**location:** simplication/ATS.py
+**location:** [simplication/ATS.py](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/simplification/ATS.py)
 
 **function:** NP_ATS(trajectory, min_gini)
 	

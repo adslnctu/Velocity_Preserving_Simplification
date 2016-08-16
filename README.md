@@ -8,6 +8,7 @@ PyPy 5.1.1 as python runtime environment.
 
 PostgreSQL 9.5.2
 
+* to link pgSQL correctly, you need modify dbname, user and passwd in **get_trajectory.py**, **runThresholdDecisionModel.py** and **runExperiments.py** to correct value
 
 ## dataset
 we use a table trajectory.taxi in pgSQL
@@ -37,6 +38,7 @@ and 2 indexes:
 | numpy        | matrix calculation     |
 
 
+
 # function
 
 ## Threshold Decision Model
@@ -56,7 +58,9 @@ and 2 indexes:
 | -f, --file | string | input file name in **tid_list/** |
 | -g, --gini | float | partition threshold (0.1, 0.9) |
 | -a, --alpha | float | weight of error and compression (0.1,0.9)|
+| -h, --help | | help information|
 
+**example:**
 
 ```bash
 $ pypy runThresholdDecisionModel.py -f example.txt -g 0.5 -a 0.5
@@ -124,3 +128,30 @@ groupID epsilon
     OUTPUT
         simplified trajectory idx list
         	e.g. [0, 1, 5, 9, 10]
+
+## experiments
+
+test the comression rate, velocity error, and effectiveness for DTW, EDR, LCSS
+1. read raw dataset from Database
+2. simplification by different method
+3. process top-k similar trajectories retrival on raw dataset
+4. process top-k similar trajectories retrival on simplified dataset
+5. calculate the compression rate, velocity error, and effectiveness
+
+
+**location:** runExperiments.py
+
+**args:**
+
+| name | type | comment
+|--------|--------| ----|
+| -f, --file | string | input file name in **tid_list/** |
+| -g, --gini | float | partition threshold (0.1 - 0.9) |
+| -e, --epsilon| float | matching threshold for edr and lcss|
+| -k, --topk | int | number of topk similar trajectory retrieved|
+| -l, --loop | int | number of loops to get teh average values |
+| --task     | string | teak name (dtw, edr, lcss) |
+| -h, --help | | help informaion|
+
+* the simplified dataset will save in **dataset/** directory
+* the output file will save im **result/** directory

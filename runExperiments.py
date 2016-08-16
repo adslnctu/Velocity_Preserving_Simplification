@@ -368,8 +368,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-l', '--loop', type=int, default=100, help='the number of loops you need (default: 10)')
     parser.add_argument('-f', '--file', default='example.txt', help = 'dataset name (default: short)')
-    parser.add_argument('-g', '--gini', type = float, default=0.5, help = 'gini index (default: 0.5)')
-    parser.add_argument('-k', '--topk', type = int, default=30, help = 'top k candidates (default: 10)')
+    parser.add_argument('-g', '--gini', type = float, default=0.5, help = 'partition threshold (0.1 - 0.9) (default: 0.5)')
+    parser.add_argument('-k', '--topk', type = int, default=30, help = 'number of topk similar trajectory retrieved (default: 10)')
     parser.add_argument('--task', choices=['dtw', 'edr', 'lcss'], default = 'dtw')
     parser.add_argument('-e','--epsilon', type = float, default = '0.0003', help = 'matching threshold for edr and lcss (default: 0.0003)')
     

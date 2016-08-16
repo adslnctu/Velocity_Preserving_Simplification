@@ -14,7 +14,7 @@ def get_from_id(tid):
             e.g. [{x:1, y:2, tid: 1, index: 0}, {x:1.5, y:2.3, tid: 1, index: 1}, ...]
         
     """
-    conn_string = "host='127.0.0.1' dbname='NAME' user='NAME' password='PASSED'"
+    conn_string = "host='127.0.0.1' dbname='NAME' user='NAME' password='PASSWD'"
     conn = psycopg2cffi.connect(conn_string)
     cur = conn.cursor()
     query = "select * from trajectory.taxi where tid = " + str(tid) + " ORDER BY index;"

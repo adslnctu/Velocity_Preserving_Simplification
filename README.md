@@ -46,7 +46,7 @@ Our framework is as follows, which includes Threshold Decision Model and Adaptiv
 
 ## Threshold Decision Model
 
-**location:** runThresholdDecisionModel.py
+**location:**  [runThresholdDecisionModel.py](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/runThresholdDecisionModel.py "runThresholdDecisionModel.py")
 
 
 	Given a trajectory tid file and parameters, output a list of error tolerances and velocity ranges.
@@ -84,7 +84,7 @@ groupID epsilon
 
 ## Adaptive Trajectory Simplification
 
-**location:** simplication/ATS.py
+**location:** [simplication/ATS.py](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/simplification/ATS.py "simplication/ATS.py")
 
 **function:** ATS(trajectory, min_gini)
 
@@ -144,7 +144,7 @@ test the comression rate, velocity error, and effectiveness for DTW, EDR, LCSS
 5. calculate the compression rate, velocity error, and effectiveness
 
 
-**location:** runExperiments.py
+**location:** [runExperiments.py](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/runThresholdDecisionModel.py "runExperiments.py")
 
 **args:**
 

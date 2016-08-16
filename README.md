@@ -132,7 +132,7 @@ groupID epsilon
         simplified trajectory idx list
         	e.g. [0, 1, 5, 9, 10]
 
-### Experiments
+# Experiments
 
 ![experiment framework](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/exp_framework.png)
 

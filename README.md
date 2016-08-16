@@ -39,7 +39,10 @@ and 2 indexes:
 
 
 
-# function
+# main function
+
+Our framework is as follows, which includes Threshold Decision Model and Adaptive Trajectory Simplification.
+![framework](https://github.com/adslnctu/Velocity_Preserving_Simplification/blob/master/framework.png)
 
 ## Threshold Decision Model
 
